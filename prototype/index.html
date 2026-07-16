@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD Canvas — Markdown 문서 리더·변환기</title>
+  <meta name="description" content="Markdown 파일을 브라우저에서 안전하게 열고, 원문과 미리보기를 확인한 뒤 PDF·HTML·Word 문서로 변환하세요.">
+  <meta name="author" content="AICLab 김진수 소장">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://md-canvas-aiclab.vercel.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:site_name" content="MD Canvas">
+  <meta property="og:title" content="MD Canvas — Markdown을 문서답게">
+  <meta property="og:description" content="Markdown을 열고, 확인하고, PDF·HTML·Word로 바로 변환하세요. 문서 원문은 브라우저 안에서 처리됩니다.">
+  <meta property="og:url" content="https://md-canvas-aiclab.vercel.app/">
+  <meta property="og:image" content="https://md-canvas-aiclab.vercel.app/og.png">
+  <meta property="og:image:secure_url" content="https://md-canvas-aiclab.vercel.app/og.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="MD Canvas, Markdown을 문서답게. 열고 확인하고 바로 변환하세요.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MD Canvas — Markdown을 문서답게">
+  <meta name="twitter:description" content="Markdown 파일을 안전하게 열고 PDF·HTML·Word로 변환하세요.">
+  <meta name="twitter:image" content="https://md-canvas-aiclab.vercel.app/og.png">
+  <meta name="theme-color" content="#f5f5f7">
+  <style>
+    :root {
+      --canvas: #f5f5f7;
+      --paper: #ffffff;
+      --ink: #1d1d1f;
+      --slate: #6e6e73;
+      --line: #d2d2d7;
+      --cobalt: #9a761f;
+      --cobalt-dark: #755812;
+      --cobalt-soft: #f8f1dd;
+      --gold: #b8953f;
+      --gold-light: #e6d39c;
+      --mint: #16835c;
+      --mint-soft: #e7f7f0;
+      --danger: #b42318;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 82% 4%, rgba(184,149,63,.13), transparent 30rem),
+        var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+        "Apple SD Gothic Neo", SUIT, "Noto Sans KR", sans-serif;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible,
+    [tabindex]:focus-visible { outline: 3px solid rgba(184,149,63,.4); outline-offset: 3px; }
+
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 34px;
+      position: sticky; top: 0; z-index: 10;
+      border-bottom: 1px solid rgba(210,210,215,.72);
+      background: rgba(250,250,252,.82);
+      backdrop-filter: saturate(180%) blur(18px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; }
+    .brand-mark {
+      width: 38px; height: 42px; position: relative; display: grid; place-items: center;
+      color: #fff; border-radius: 9px 9px 13px 9px;
+      background: linear-gradient(145deg, #c5a85a, #8a6719);
+      box-shadow: 0 8px 20px rgba(117,88,18,.18);
+    }
+    .brand-mark::after {
+      content: ""; position: absolute; right: 0; top: 0;
+      border-top: 10px solid var(--canvas); border-left: 10px solid transparent;
+    }
+    .brand em { font-style: normal; color: var(--cobalt); }
+    .nav { display: flex; align-items: center; gap: 8px; }
+    .nav button, .ghost {
+      border: 0; background: transparent; color: #475467; font-weight: 650;
+      padding: 11px 14px; border-radius: 10px;
+    }
+    .nav button:hover, .ghost:hover { background: #edf1f6; color: var(--ink); }
+
+    main { flex: 1; }
+    .screen { display: none; width: 100%; }
+    .screen.active { display: block; animation: reveal .26s ease-out; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } }
+
+    .start-card {
+      width: min(1240px, calc(100% - 48px)); margin: 36px auto 0;
+      min-height: 620px; padding: 72px 64px;
+      display: grid; grid-template-columns: .92fr 1.08fr; gap: 68px; align-items: center;
+      background: rgba(255,255,255,.9); border: 1px solid rgba(210,210,215,.9);
+      border-radius: 32px; box-shadow: var(--shadow);
+    }
+    .hero-copy { text-align: left; }
+    .eyebrow { margin: 0 0 12px; color: var(--cobalt); font-size: 14px; font-weight: 800; letter-spacing: .08em; }
+    h1 { margin: 0; font-size: clamp(34px, 4vw, 56px); line-height: 1.16; letter-spacing: -.045em; }
+    .lead { margin: 22px 0 28px; max-width: 570px; color: var(--slate); font-size: 19px; line-height: 1.68; letter-spacing: -.015em; }
+    .hero-actions { display: flex; align-items: center; gap: 10px; margin: 24px 0 20px; }
+    .trust-row { display: flex; gap: 18px; flex-wrap: wrap; color: #55565a; font-size: 14px; }
+    .trust-row span::before { content: "✓"; margin-right: 6px; color: var(--gold); font-weight: 900; }
+    .privacy {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px;
+      padding: 9px 13px; color: #17664a; background: var(--mint-soft);
+      border-radius: 999px; font-size: 14px; font-weight: 700;
+    }
+    .privacy-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); }
+    .dropzone {
+      min-height: 390px; margin: 0; padding: 34px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(145deg, #fff, #f8f8fa);
+      border: 1.5px dashed #b9a26a; border-radius: 24px; transition: .2s ease;
+    }
+    .dropzone.drag { background: var(--cobalt-soft); border-color: var(--cobalt); transform: scale(1.01); }
+    .file-icon { width: 66px; height: 76px; display: grid; place-items: center; margin-bottom: 20px; border-radius: 12px 12px 18px 12px; background: var(--cobalt-soft); color: var(--cobalt); font-weight: 900; border: 1px solid var(--gold-light); }
+    .dropzone strong { font-size: 21px; }
+    .dropzone p { margin: 8px 0 18px; color: var(--slate); }
+    .primary {
+      min-height: 46px; padding: 0 20px; border: 0; border-radius: 11px;
+      color: white; background: #1d1d1f; font-weight: 700;
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    }
+    .primary:hover { background: #343438; }
+    .secondary {
+      min-height: 46px; padding: 0 18px; border: 1px solid var(--line);
+      border-radius: 11px; background: white; color: var(--ink); font-weight: 700;
+    }
+    .secondary:hover { background: #f7f9fc; }
+    .formats { margin-top: 15px; color: #7b8799; font-size: 13px; }
+    .sample { margin-top: 0; color: var(--cobalt); }
+    .start-foot { display: flex; justify-content: center; margin-top: 18px; color: var(--slate); font-size: 14px; }
+    .landing-section { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 112px 0; }
+    .section-kicker { margin: 0 0 12px; color: var(--cobalt); font-weight: 750; letter-spacing: .06em; font-size: 13px; }
+    .section-title { margin: 0; max-width: 720px; font-size: clamp(34px, 5vw, 58px); letter-spacing: -.05em; line-height: 1.08; }
+    .section-lead { max-width: 680px; margin: 20px 0 0; color: var(--slate); font-size: 18px; line-height: 1.7; }
+    .steps { margin-top: 58px; display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
+    .step { padding: 36px 34px 42px 0; }
+    .step + .step { padding-left: 34px; border-left: 1px solid var(--line); }
+    .step-number { color: var(--gold); font-size: 14px; font-weight: 800; letter-spacing: .1em; }
+    .step h3 { margin: 40px 0 12px; font-size: 25px; letter-spacing: -.03em; }
+    .step p { margin: 0; color: var(--slate); line-height: 1.7; }
+    .privacy-section { width: min(1180px, calc(100% - 48px)); margin: 0 auto 112px; padding: 72px; display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; color: white; background: #1d1d1f; border-radius: 30px; }
+    .privacy-section .section-kicker { color: #d6ba70; }
+    .privacy-section .section-title { font-size: clamp(32px, 4vw, 50px); }
+    .privacy-list { display: grid; gap: 12px; }
+    .privacy-item { padding: 21px 22px; border: 1px solid #3a3a3e; border-radius: 14px; background: #252529; }
+    .privacy-item strong { display: block; margin-bottom: 7px; color: #e4c979; }
+    .privacy-item span { color: #c7c7cc; line-height: 1.55; }
+    .faq-list { margin-top: 48px; border-top: 1px solid var(--line); }
+    details { padding: 24px 0; border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; font-size: 18px; font-weight: 700; }
+    details p { max-width: 780px; color: var(--slate); line-height: 1.7; }
+    .site-footer { padding: 58px max(24px, calc((100% - 1120px)/2)); background: #e9e9ec; border-top: 1px solid #d2d2d7; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; }
+    .footer-brand p { max-width: 300px; color: var(--slate); line-height: 1.6; }
+    .footer-col strong { display: block; margin-bottom: 16px; font-size: 13px; }
+    .footer-col a { display: block; margin: 11px 0; color: #515154; text-decoration: none; font-size: 14px; }
+    .footer-col a:hover { color: var(--cobalt); }
+    .footer-bottom { margin-top: 48px; padding-top: 22px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #c9c9ce; color: var(--slate); font-size: 12px; }
+
+    .workspace {
+      width: min(1180px, calc(100% - 48px)); margin: 38px auto;
+      overflow: hidden; height: calc(100vh - 148px); min-height: 650px;
+      background: var(--paper); border: 1px solid #d7e0eb; border-radius: 22px;
+      box-shadow: var(--shadow); display: grid; grid-template-rows: 58px 1fr 62px;
+    }
+    .docbar, .statusbar { display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+    .docbar { border-bottom: 1px solid var(--line); }
+    .doc-title { display: flex; align-items: center; gap: 10px; font-weight: 750; }
+    .saved { color: var(--mint); font-size: 13px; font-weight: 700; }
+    .doc-actions { display: flex; gap: 6px; }
+    .editor-grid { min-height: 0; display: grid; grid-template-columns: 1fr 54px 1.08fr; }
+    .pane { min-width: 0; display: flex; flex-direction: column; }
+    .pane-head {
+      height: 48px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; border-bottom: 1px solid var(--line); color: #475467; font-size: 14px; font-weight: 750;
+    }
+    #source {
+      flex: 1; resize: none; border: 0; padding: 24px 26px; color: #344054; background: #fbfcfe;
+      font-family: "D2Coding", "SFMono-Regular", Consolas, monospace; font-size: 15px; line-height: 1.75;
+    }
+    #source:focus { outline: 0; background: white; }
+    .rail {
+      position: relative; display: grid; place-items: center; color: var(--cobalt);
+      background: linear-gradient(90deg, #faf9f5, #f7f0dc 50%, #faf9f5);
+      border-inline: 1px solid var(--line);
+    }
+    .rail::before { content: ""; position: absolute; width: 2px; height: 100%; background: rgba(184,149,63,.28); }
+    .rail span { z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: white; border: 1px solid var(--gold-light); font-size: 18px; box-shadow: 0 6px 16px rgba(117,88,18,.12); }
+    .preview { flex: 1; overflow: auto; padding: 30px 38px 60px; line-height: 1.8; }
+    .preview h1 { margin: 0 0 22px; font-size: 34px; }
+    .preview h2 { margin: 30px 0 10px; font-size: 21px; padding-bottom: 8px; border-bottom: 1px solid #e8edf3; }
+    .preview p, .preview ul { color: #344054; }
+    .preview code { padding: 2px 6px; border-radius: 5px; background: #eef2f7; color: #9b2c2c; }
+    .preview pre { overflow: auto; padding: 18px; color: #eaf0ff; background: #202a3a; border-radius: 12px; }
+    .preview blockquote { margin: 18px 0; padding: 4px 18px; border-left: 4px solid var(--cobalt); color: #475467; background: #f6f8fd; }
+    .statusbar { border-top: 1px solid var(--line); background: #fbfcfe; }
+    .local-state { display: flex; align-items: center; gap: 8px; color: #475467; font-size: 13px; }
+    .view-tools { display: flex; gap: 7px; }
+    .segmented { display: flex; padding: 3px; background: #edf1f6; border-radius: 10px; }
+    .segmented button { border: 0; background: transparent; padding: 8px 10px; color: #667085; border-radius: 8px; font-size: 13px; }
+    .segmented button.active { background: white; color: var(--ink); box-shadow: 0 2px 6px rgba(30,45,65,.09); }
+
+    .overlay { display: none; position: fixed; inset: 0; z-index: 20; background: rgba(24,32,43,.34); backdrop-filter: blur(3px); }
+    .overlay.active { display: block; }
+    .export-panel {
+      position: absolute; right: 0; top: 0; width: min(430px, 100%); height: 100%;
+      padding: 28px; background: white; box-shadow: -20px 0 50px rgba(24,32,43,.18);
+      animation: slide .22s ease-out;
+    }
+    @keyframes slide { from { transform: translateX(30px); opacity: 0; } }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .panel-head h2 { margin: 0; font-size: 25px; }
+    .close { width: 40px; height: 40px; border: 0; border-radius: 10px; background: #f1f4f8; font-size: 20px; }
+    .field { margin-bottom: 22px; }
+    .field label { display: block; margin-bottom: 9px; font-weight: 750; font-size: 14px; }
+    .field input, .field select { width: 100%; height: 46px; padding: 0 12px; border: 1px solid #cfd8e5; border-radius: 10px; background: white; }
+    .format-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .format-picker button { height: 48px; border: 1px solid var(--line); border-radius: 10px; background: white; font-weight: 750; }
+    .format-picker button.active { border-color: var(--cobalt); color: var(--cobalt); background: var(--cobalt-soft); }
+    .estimate { margin: 28px 0; padding: 14px; color: #475467; background: #f6f8fb; border-radius: 10px; font-size: 14px; }
+    .panel-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .complete-card { min-height: 570px; display: grid; place-items: center; text-align: center; background: white; border-radius: 28px; box-shadow: var(--shadow); }
+    .check { width: 76px; height: 76px; margin: 0 auto 22px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--mint); font-size: 36px; }
+    .complete-card h1 { font-size: 38px; }
+    .file-result { margin: 16px 0 28px; color: var(--slate); }
+    .complete-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .complete-privacy { margin-top: 34px; color: var(--mint); font-size: 14px; font-weight: 700; }
+    #fileInput { position: absolute; opacity: 0; pointer-events: none; }
+    .error { min-height: 22px; margin-top: 10px; color: var(--danger); font-size: 14px; font-weight: 700; }
+
+    @media (max-width: 850px) {
+      .topbar { padding: 0 18px; }
+      .nav button:not(:last-child) { display: none; }
+      .start-card { width: calc(100% - 28px); padding: 42px 22px 28px; grid-template-columns: 1fr; gap: 34px; }
+      .hero-copy { text-align: center; }
+      .hero-actions, .trust-row { justify-content: center; }
+      .landing-section { width: calc(100% - 36px); padding: 78px 0; }
+      .steps { grid-template-columns: 1fr; }
+      .step, .step + .step { padding: 28px 0; border-left: 0; border-bottom: 1px solid var(--line); }
+      .step h3 { margin-top: 18px; }
+      .privacy-section { width: calc(100% - 28px); padding: 42px 24px; grid-template-columns: 1fr; gap: 36px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .footer-brand { grid-column: 1 / -1; }
+      .footer-bottom { flex-direction: column; }
+      .workspace { height: calc(100vh - 112px); }
+      .editor-grid { grid-template-columns: 1fr; }
+      .rail { display: none; }
+      .pane.source-pane { display: none; }
+      .workspace.show-source .source-pane { display: flex; }
+      .workspace.show-source .preview-pane { display: none; }
+      .segmented button:first-child { display: inline-block; }
+      .doc-actions .ghost { display: none; }
+      .local-state span:last-child { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">M</span><span>MD <em>Canvas</em></span></div>
+      <nav class="nav" aria-label="주 메뉴">
+        <button type="button" id="navOpen">파일 열기</button>
+        <button type="button" data-scroll="how">사용법</button>
+        <button type="button" data-scroll="privacy">개인정보 보호</button>
+        <button type="button" data-scroll="faq">도움말</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="screen active" id="startScreen" aria-labelledby="startTitle">
+        <div class="start-card">
+          <div class="hero-copy">
+            <p class="eyebrow">SIMPLE · PRIVATE · BEAUTIFUL</p>
+            <h1 id="startTitle">Markdown을 문서답게.<br>열고, 확인하고,<br>바로 변환하세요.</h1>
+            <p class="lead">AI와 Obsidian에서 만든 Markdown 파일을 읽기 좋은 화면으로 확인하고 PDF·HTML·Word 문서로 저장하세요.</p>
+            <div class="privacy"><span class="privacy-dot"></span>문서 원문을 서버에 저장하지 않습니다</div>
+            <div class="hero-actions">
+              <button class="primary" type="button" id="heroOpen">Markdown 파일 열기</button>
+              <button class="ghost sample" type="button" id="sampleButton">샘플로 먼저 보기</button>
+            </div>
+            <div class="trust-row"><span>가입 없음</span><span>한글 지원</span><span>브라우저 내부 처리</span></div>
+          </div>
+          <div>
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Markdown 파일 선택">
+              <div class="file-icon">.md</div>
+              <strong>파일을 여기에 놓으세요</strong>
+              <p>또는 내 컴퓨터에서 파일을 선택하세요</p>
+              <button class="primary" type="button" id="chooseFile">파일 선택</button>
+              <div class="formats">.md · .markdown · .txt / 최대 20MB</div>
+            </div>
+            <div class="error" id="fileError" role="alert"></div>
+            <div class="start-foot">파일은 이 기기 안에서만 열립니다</div>
+          </div>
+        </div>
+
+        <section class="landing-section" id="how" aria-labelledby="howTitle">
+          <p class="section-kicker">HOW IT WORKS</p>
+          <h2 class="section-title" id="howTitle">세 단계면 끝납니다.</h2>
+          <p class="section-lead">어려운 설정이나 설치 없이, 파일을 여는 순간부터 저장까지 한 흐름으로 이어집니다.</p>
+          <div class="steps">
+            <article class="step"><span class="step-number">STEP 01</span><h3>파일 열기</h3><p>Markdown 파일을 화면에 끌어놓거나 내 컴퓨터에서 선택합니다.</p></article>
+            <article class="step"><span class="step-number">STEP 02</span><h3>내용 확인</h3><p>원문과 읽기 화면을 나란히 보며 필요한 부분만 간단히 수정합니다.</p></article>
+            <article class="step"><span class="step-number">STEP 03</span><h3>원하는 형식으로 저장</h3><p>PDF·HTML·Word 중 하나를 선택해 내 컴퓨터에 저장합니다.</p></article>
+          </div>
+        </section>
+
+        <section class="privacy-section" id="privacy" aria-labelledby="privacyTitle">
+          <div><p class="section-kicker">PRIVACY BY DESIGN</p><h2 class="section-title" id="privacyTitle">문서는 먼저<br>사용자의 것입니다.</h2></div>
+          <div class="privacy-list">
+            <div class="privacy-item"><strong>서버 저장 없음</strong><span>기본 모드에서는 문서 원문을 서버로 전송하거나 저장하지 않습니다.</span></div>
+            <div class="privacy-item"><strong>사용자가 선택하는 임시 저장</strong><span>최근 문서 복구 기능은 동의를 받은 뒤 이 브라우저 안에서만 작동합니다.</span></div>
+            <div class="privacy-item"><strong>언제든 데이터 삭제</strong><span>이 기기에 남은 임시 문서와 설정을 직접 삭제할 수 있도록 구성합니다.</span></div>
+          </div>
+        </section>
+
+        <section class="landing-section" id="faq" aria-labelledby="faqTitle">
+          <p class="section-kicker">SUPPORT</p>
+          <h2 class="section-title" id="faqTitle">자주 묻는 질문</h2>
+          <div class="faq-list">
+            <details><summary>어떤 파일을 열 수 있나요?</summary><p>`.md`, `.markdown`, `.txt` 형식을 지원하며 MVP에서는 최대 20MB까지 열 수 있습니다.</p></details>
+            <details><summary>내 문서가 서버로 올라가나요?</summary><p>현재 기본 기능은 브라우저 내부에서 처리합니다. 향후 클라우드 기능을 추가하면 별도 동의와 개인정보 안내를 제공합니다.</p></details>
+            <details><summary>Word 변환 시 모든 서식이 유지되나요?</summary><p>제목, 목록, 표, 이미지 등 주요 서식을 지원합니다. 복잡한 확장 문법은 일부 다르게 표시될 수 있습니다.</p></details>
+            <details><summary>모바일에서도 사용할 수 있나요?</summary><p>모바일에서는 미리보기와 내보내기를 우선 지원하고, 원문 편집은 데스크톱 환경을 권장합니다.</p></details>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <div class="footer-grid">
+            <div class="footer-brand"><div class="brand"><span class="brand-mark">M</span><span>MD <em>Canvas</em></span></div><p>Markdown 문서를 안전하게 읽고 원하는 형식으로 변환하는 웹 도구입니다.</p><p><strong>AICLab 김진수 소장</strong><br><a href="tel:+821089219536">연락처: 010-8921-9536</a><br><a href="mailto:info@aiclab2020.com">이메일: info@aiclab2020.com</a></p></div>
+            <div class="footer-col"><strong>제품</strong><a href="#how">사용법</a><a href="#privacy">개인정보 보호</a><a href="#faq">지원 형식</a></div>
+            <div class="footer-col"><strong>지원</strong><a href="#faq">자주 묻는 질문</a><a href="mailto:info@aiclab2020.com">문의</a><a href="#faq">도움말</a></div>
+            <div class="footer-col"><strong>정책</strong><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="licenses.html">오픈소스 라이선스</a></div>
+          </div>
+          <div class="footer-bottom"><span>© 2026 AICLab 김진수 소장. All rights reserved.</span><span>MD Canvas는 AICLab에서 운영합니다.</span></div>
+        </footer>
+      </section>
+
+      <section class="screen" id="workspaceScreen" aria-label="문서 작업 화면">
+        <div class="workspace" id="workspace">
+          <div class="docbar">
+            <div class="doc-title"><span>▤</span><span id="documentName">AI_강의안.md</span><span class="saved">● 이 기기에 임시 저장됨</span></div>
+            <div class="doc-actions"><button class="ghost" id="newFile" type="button">새 파일</button><button class="ghost" type="button">보기 설정</button></div>
+          </div>
+          <div class="editor-grid">
+            <section class="pane source-pane">
+              <div class="pane-head"><span>원문</span><span id="lineCount">12줄</span></div>
+              <textarea id="source" aria-label="Markdown 원문"></textarea>
+            </section>
+            <div class="rail" aria-hidden="true"><span>→</span></div>
+            <section class="pane preview-pane">
+              <div class="pane-head"><span>미리보기</span><span>읽기 화면</span></div>
+              <article class="preview" id="preview"></article>
+            </section>
+          </div>
+          <div class="statusbar">
+            <div class="local-state"><span class="privacy-dot"></span><span>서버 전송 없이 이 브라우저에서 처리 중</span></div>
+            <div class="view-tools">
+              <div class="segmented" aria-label="보기 모드">
+                <button type="button" data-view="source">원문</button>
+                <button type="button" class="active" data-view="split">나란히</button>
+                <button type="button" data-view="preview">미리보기</button>
+              </div>
+              <button class="primary" type="button" id="exportButton">내보내기</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="completeScreen" aria-labelledby="completeTitle">
+        <div class="complete-card">
+          <div>
+            <div class="check">✓</div>
+            <h1 id="completeTitle"><span id="completeFormat">PDF</span> 저장이 완료됐습니다</h1>
+            <p class="file-result"><span id="completeFile">AI_강의안.pdf</span> · 프로토타입 결과</p>
+            <div class="complete-actions">
+              <button class="secondary" type="button" id="saveAgain">파일 다시 저장</button>
+              <button class="primary" type="button" id="backToDocument">문서로 돌아가기</button>
+              <button class="ghost" type="button" id="openNew">새 문서 열기</button>
+            </div>
+            <div class="complete-privacy">✓ 문서 내용은 서버에 저장되지 않았습니다</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
+
+  <div class="overlay" id="exportOverlay" aria-hidden="true">
+    <aside class="export-panel" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+      <div class="panel-head"><h2 id="exportTitle">내보내기</h2><button class="close" id="closeExport" type="button" aria-label="닫기">×</button></div>
+      <div class="field">
+        <label>파일 형식</label>
+        <div class="format-picker">
+          <button class="active" type="button" data-format="PDF">PDF</button>
+          <button type="button" data-format="HTML">HTML</button>
+          <button type="button" data-format="DOCX">DOCX</button>
+        </div>
+      </div>
+      <div class="field"><label for="exportName">파일 이름</label><input id="exportName" value="AI_강의안"></div>
+      <div class="field"><label for="paperSize">용지 크기</label><select id="paperSize"><option>A4</option><option>Letter</option></select></div>
+      <div class="field"><label for="marginSize">여백</label><select id="marginSize"><option>보통</option><option>좁게</option><option>넓게</option></select></div>
+      <div class="field"><label for="theme">문서 테마</label><select id="theme"><option>밝게</option><option>어둡게</option></select></div>
+      <div class="estimate" id="estimate">예상 결과: PDF 약 2쪽</div>
+      <div class="panel-actions"><button class="secondary" id="cancelExport" type="button">취소</button><button class="primary" id="confirmExport" type="button">PDF로 저장</button></div>
+    </aside>
+  </div>
+
+  <script>
+    const sample = `# 생성형 AI 실전 강의안
+
+> 비전문가도 90분 안에 AI 활용 결과물을 완성하는 실습형 강의입니다.
+
+## 학습 목표
+
+- 생성형 AI의 핵심 개념 이해
+- 좋은 질문을 만드는 프롬프트 구조 익히기
+- 업무에 바로 쓰는 결과물 완성
+
+## 오늘의 실습
+
+1. AI에게 역할과 대상을 알려줍니다.
+2. 원하는 결과 형식을 구체적으로 정합니다.
+3. 첫 결과를 검토하고 개선 요청을 합니다.
+
+\`핵심: 작게 시작하고 결과를 보며 수정합니다.\`
+
+## 다음 행동
+
+- 내 업무 한 가지를 선택합니다.
+- 10분 안에 첫 프롬프트를 실행합니다.`;
+
+    const $ = (selector) => document.querySelector(selector);
+    const screens = [...document.querySelectorAll(".screen")];
+    const show = (id) => {
+      screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+    }
+
+    function renderMarkdown(value) {
+      let html = escapeHtml(value);
+      html = html
+        .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+        .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+        .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+        .replace(/^&gt; (.*)$/gm, "<blockquote>$1</blockquote>")
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/^- (.*)$/gm, "<li>$1</li>")
+        .replace(/^\d+\. (.*)$/gm, "<li>$1</li>")
+        .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
+        .replace(/\n{2,}/g, "</p><p>")
+        .replace(/\n/g, "<br>");
+      return `<p>${html}</p>`.replace(/<p>\s*(<h[1-3]>)/g, "$1").replace(/(<\/h[1-3]>)\s*<\/p>/g, "$1");
+    }
+
+    function loadDocument(text, name = "AI_강의안.md") {
+      $("#source").value = text;
+      $("#documentName").textContent = name;
+      $("#exportName").value = name.replace(/\.(md|markdown|txt)$/i, "");
+      updatePreview();
+      show("workspaceScreen");
+    }
+
+    function updatePreview() {
+      const text = $("#source").value;
+      $("#preview").innerHTML = renderMarkdown(text);
+      $("#lineCount").textContent = `${text.split("\n").length}줄`;
+    }
+
+    function handleFile(file) {
+      $("#fileError").textContent = "";
+      if (!file) return;
+      if (!/\.(md|markdown|txt)$/i.test(file.name)) {
+        $("#fileError").textContent = "Markdown 또는 텍스트 파일을 선택해 주세요.";
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        $("#fileError").textContent = `현재 파일은 ${(file.size / 1024 / 1024).toFixed(1)}MB입니다. 최대 20MB까지 열 수 있습니다.`;
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => loadDocument(String(reader.result), file.name);
+      reader.onerror = () => { $("#fileError").textContent = "파일을 읽지 못했습니다. UTF-8 형식인지 확인해 주세요."; };
+      reader.readAsText(file, "UTF-8");
+    }
+
+    const openPicker = () => $("#fileInput").click();
+    $("#chooseFile").addEventListener("click", (event) => { event.stopPropagation(); openPicker(); });
+    $("#heroOpen").addEventListener("click", openPicker);
+    $("#navOpen").addEventListener("click", () => show("startScreen"));
+    document.querySelectorAll("[data-scroll]").forEach((button) => button.addEventListener("click", () => {
+      show("startScreen");
+      requestAnimationFrame(() => document.getElementById(button.dataset.scroll).scrollIntoView({ behavior: "smooth" }));
+    }));
+    $("#dropzone").addEventListener("click", openPicker);
+    $("#dropzone").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPicker(); }
+    });
+    $("#fileInput").addEventListener("change", (event) => handleFile(event.target.files[0]));
+    ["dragenter", "dragover"].forEach((name) => $("#dropzone").addEventListener(name, (event) => {
+      event.preventDefault(); $("#dropzone").classList.add("drag");
+    }));
+    ["dragleave", "drop"].forEach((name) => $("#dropzone").addEventListener(name, (event) => {
+      event.preventDefault(); $("#dropzone").classList.remove("drag");
+    }));
+    $("#dropzone").addEventListener("drop", (event) => handleFile(event.dataTransfer.files[0]));
+    $("#sampleButton").addEventListener("click", () => loadDocument(sample));
+    $("#source").addEventListener("input", updatePreview);
+    $("#newFile").addEventListener("click", () => show("startScreen"));
+
+    document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
+      document.querySelectorAll("[data-view]").forEach((item) => item.classList.remove("active"));
+      button.classList.add("active");
+      const mode = button.dataset.view;
+      $("#workspace").classList.toggle("show-source", mode === "source");
+      document.querySelector(".source-pane").style.display = mode === "preview" ? "none" : "";
+      document.querySelector(".preview-pane").style.display = mode === "source" ? "none" : "";
+      document.querySelector(".rail").style.display = mode === "split" ? "" : "none";
+      document.querySelector(".editor-grid").style.gridTemplateColumns = mode === "split" ? "" : "1fr";
+    }));
+
+    const setOverlay = (open) => {
+      $("#exportOverlay").classList.toggle("active", open);
+      $("#exportOverlay").setAttribute("aria-hidden", String(!open));
+      if (open) $("#closeExport").focus();
+    };
+    $("#exportButton").addEventListener("click", () => setOverlay(true));
+    $("#closeExport").addEventListener("click", () => setOverlay(false));
+    $("#cancelExport").addEventListener("click", () => setOverlay(false));
+    $("#exportOverlay").addEventListener("click", (event) => { if (event.target === $("#exportOverlay")) setOverlay(false); });
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape") setOverlay(false); });
+
+    let selectedFormat = "PDF";
+    document.querySelectorAll("[data-format]").forEach((button) => button.addEventListener("click", () => {
+      selectedFormat = button.dataset.format;
+      document.querySelectorAll("[data-format]").forEach((item) => item.classList.toggle("active", item === button));
+      $("#confirmExport").textContent = selectedFormat === "DOCX" ? "Word 문서로 저장" : `${selectedFormat}로 저장`;
+      $("#estimate").textContent = selectedFormat === "PDF" ? "예상 결과: PDF 약 2쪽" : `예상 결과: ${selectedFormat} 파일 1개`;
+    }));
+    $("#confirmExport").addEventListener("click", () => {
+      setOverlay(false);
+      const extension = selectedFormat.toLowerCase();
+      $("#completeFormat").textContent = selectedFormat === "DOCX" ? "Word 문서" : selectedFormat;
+      $("#completeFile").textContent = `${$("#exportName").value || "문서"}.${extension}`;
+      show("completeScreen");
+    });
+    $("#backToDocument").addEventListener("click", () => show("workspaceScreen"));
+    $("#saveAgain").addEventListener("click", () => { show("workspaceScreen"); setTimeout(() => setOverlay(true), 150); });
+    $("#openNew").addEventListener("click", () => show("startScreen"));
+
+    loadDocument(sample);
+    show("startScreen");
+  </script>
+</body>
+</html>

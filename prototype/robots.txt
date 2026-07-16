@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://md-canvas-aiclab.vercel.app/sitemap.xml

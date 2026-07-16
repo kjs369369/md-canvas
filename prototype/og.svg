@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="10%" r="65%">
+      <stop offset="0" stop-color="#eadba9" stop-opacity=".72"/>
+      <stop offset=".58" stop-color="#f5f5f7" stop-opacity=".15"/>
+      <stop offset="1" stop-color="#f5f5f7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d2b86a"/>
+      <stop offset="1" stop-color="#806014"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity=".10"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="#f5f5f7"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="64" y="54" width="1072" height="522" rx="34" fill="#ffffff" stroke="#d2d2d7" filter="url(#shadow)"/>
+  <g transform="translate(112 108)">
+    <path d="M0 10C0 4.477 4.477 0 10 0h58l22 22v82c0 5.523-4.477 10-10 10H10c-5.523 0-10-4.477-10-10V10z" fill="url(#gold)"/>
+    <path d="M68 0v22h22" fill="#f5f5f7" opacity=".7"/>
+    <text x="45" y="69" text-anchor="middle" fill="#fff" font-size="28" font-weight="800" font-family="-apple-system,BlinkMacSystemFont,Arial,sans-serif">M</text>
+  </g>
+  <text x="226" y="150" fill="#1d1d1f" font-size="34" font-weight="760" letter-spacing="-1" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',Arial,sans-serif">MD Canvas</text>
+  <text x="112" y="292" fill="#1d1d1f" font-size="67" font-weight="760" letter-spacing="-3.5" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',Arial,sans-serif">Markdown을 문서답게.</text>
+  <text x="112" y="376" fill="#1d1d1f" font-size="67" font-weight="760" letter-spacing="-3.5" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',Arial,sans-serif">열고, 확인하고, 바로 변환하세요.</text>
+  <text x="114" y="447" fill="#6e6e73" font-size="27" font-weight="500" letter-spacing="-1" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',Arial,sans-serif">PDF · HTML · Word  |  서버 저장 없이 브라우저에서 안전하게</text>
+  <rect x="112" y="494" width="183" height="42" rx="21" fill="#f8f1dd" stroke="#e6d39c"/>
+  <circle cx="137" cy="515" r="6" fill="#16835c"/>
+  <text x="153" y="523" fill="#755812" font-size="18" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',Arial,sans-serif">AICLab 김진수 소장</text>
+</svg>
