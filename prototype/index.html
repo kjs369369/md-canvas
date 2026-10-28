@@ -25,6 +25,8 @@
   <meta name="twitter:description" content="Markdown 파일을 안전하게 열고 PDF·HTML·Word로 변환하세요.">
   <meta name="twitter:image" content="https://md-canvas-aiclab.vercel.app/og.png">
   <meta name="theme-color" content="#f5f5f7">
+  <meta name="application-version" content="1.1.0">
+  <link rel="icon" href="og.png">
   <style>
     :root {
       --canvas: #f5f5f7;
@@ -207,6 +209,14 @@
     .preview code { padding: 2px 6px; border-radius: 5px; background: #eef2f7; color: #9b2c2c; }
     .preview pre { overflow: auto; padding: 18px; color: #eaf0ff; background: #202a3a; border-radius: 12px; }
     .preview blockquote { margin: 18px 0; padding: 4px 18px; border-left: 4px solid var(--cobalt); color: #475467; background: #f6f8fd; }
+    .preview table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .preview th, .preview td { border: 1px solid #e4e4e7; padding: 8px 10px; text-align: left; vertical-align: top; }
+    .preview th { background: var(--cobalt-soft); }
+    .preview img { max-width: 100%; height: auto; border-radius: 10px; }
+    .preview figure { margin: 16px 0; }
+    .preview figcaption { color: var(--slate); font-size: 13px; }
+    .preview a { color: var(--cobalt-dark); }
+    .preview pre code { padding: 0; background: transparent; color: inherit; }
     .statusbar { border-top: 1px solid var(--line); background: #fbfcfe; }
     .local-state { display: flex; align-items: center; gap: 8px; color: #475467; font-size: 13px; }
     .view-tools { display: flex; gap: 7px; }
@@ -234,7 +244,13 @@
     .estimate { margin: 28px 0; padding: 14px; color: #475467; background: #f6f8fb; border-radius: 10px; font-size: 14px; }
     .panel-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-    .complete-card { min-height: 570px; display: grid; place-items: center; text-align: center; background: white; border-radius: 28px; box-shadow: var(--shadow); }
+    .complete-card { width: min(980px, calc(100% - 32px)); margin: 28px auto 48px; padding: 36px 28px 32px; text-align: center; background: white; border-radius: 28px; box-shadow: var(--shadow); }
+    .result-frame { width: 100%; height: min(480px, 52vh); margin: 16px 0 8px; border: 1px solid var(--line); border-radius: 16px; background: white; }
+    .export-message { min-height: 24px; margin: 8px 0 12px; color: var(--slate); line-height: 1.55; }
+    .export-message.good { color: var(--mint); font-weight: 700; }
+    .export-message.bad { color: var(--danger); font-weight: 700; }
+    a.primary, a.secondary { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    button:disabled { opacity: .65; cursor: progress; }
     .check { width: 76px; height: 76px; margin: 0 auto 22px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--mint); font-size: 36px; }
     .complete-card h1 { font-size: 38px; }
     .file-result { margin: 16px 0 28px; color: var(--slate); }
@@ -348,7 +364,7 @@
           <h2 class="section-title" id="faqTitle">자주 묻는 질문</h2>
           <div class="faq-list">
             <details><summary>어떤 파일을 열 수 있나요?</summary><p>`.md`, `.markdown`, `.txt` 형식을 지원하며 MVP에서는 최대 20MB까지 열 수 있습니다.</p></details>
-            <details><summary>내 문서가 서버로 올라가나요?</summary><p>현재 기본 기능은 브라우저 내부에서 처리합니다. 향후 클라우드 기능을 추가하면 별도 동의와 개인정보 안내를 제공합니다.</p></details>
+            <details><summary>내 문서가 서버로 올라가나요?</summary><p>변환은 이 브라우저에서 이루어집니다. 공유 링크를 만들면 문서 내용이 주소의 # 뒤에만 포함되고, 서버에는 저장되지 않습니다.</p></details>
             <details><summary>Word 변환 시 모든 서식이 유지되나요?</summary><p>제목, 목록, 표, 이미지 등 주요 서식을 지원합니다. 복잡한 확장 문법은 일부 다르게 표시될 수 있습니다.</p></details>
             <details><summary>모바일에서도 사용할 수 있나요?</summary><p>모바일에서는 미리보기와 내보내기를 우선 지원하고, 원문 편집은 데스크톱 환경을 권장합니다.</p></details>
           </div>
@@ -361,7 +377,7 @@
             <div class="footer-col"><strong>지원</strong><a href="#faq">자주 묻는 질문</a><a href="mailto:info@aiclab2020.com">문의</a><a href="#faq">도움말</a></div>
             <div class="footer-col"><strong>정책</strong><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="licenses.html">오픈소스 라이선스</a></div>
           </div>
-          <div class="footer-bottom"><span>© 2026 AICLab 김진수 소장. All rights reserved.</span><span>MD Canvas는 AICLab에서 운영합니다.</span></div>
+          <div class="footer-bottom"><span>© 2026 AICLab 김진수 소장. All rights reserved.</span><span>MD Canvas v1.1.0 · AICLab에서 운영합니다.</span></div>
         </footer>
       </section>
 
@@ -398,17 +414,20 @@
 
       <section class="screen" id="completeScreen" aria-labelledby="completeTitle">
         <div class="complete-card">
-          <div>
-            <div class="check">✓</div>
-            <h1 id="completeTitle"><span id="completeFormat">PDF</span> 저장이 완료됐습니다</h1>
-            <p class="file-result"><span id="completeFile">AI_강의안.pdf</span> · 프로토타입 결과</p>
-            <div class="complete-actions">
-              <button class="secondary" type="button" id="saveAgain">파일 다시 저장</button>
-              <button class="primary" type="button" id="backToDocument">문서로 돌아가기</button>
-              <button class="ghost" type="button" id="openNew">새 문서 열기</button>
-            </div>
-            <div class="complete-privacy">✓ 문서 내용은 서버에 저장되지 않았습니다</div>
+          <div class="check">✓</div>
+          <h1 id="completeTitle"><span id="completeFormat">PDF</span> 저장이 완료됐습니다</h1>
+          <p class="file-result"><span id="completeFile">AI_강의안.pdf</span></p>
+          <p class="export-message" id="exportMessage" role="status" aria-live="polite"></p>
+          <div class="complete-actions">
+            <a class="primary" id="downloadLink" download href="#download">파일 다운로드</a>
+            <a class="secondary" id="openViewLink" target="_blank" rel="noopener" href="view.html">새 탭에서 보기</a>
+            <button class="secondary" type="button" id="copyViewLink">공유 링크 복사</button>
+            <button class="secondary" type="button" id="saveAgain">파일 다시 저장</button>
+            <button class="secondary" type="button" id="backToDocument">문서로 돌아가기</button>
+            <button class="ghost" type="button" id="openNew">새 문서 열기</button>
           </div>
+          <iframe class="result-frame" id="resultFrame" title="변환 결과 미리보기"></iframe>
+          <div class="complete-privacy">✓ 문서 원문은 서버에 저장되지 않았습니다. 공유 링크는 주소 안에만 내용을 담습니다.</div>
         </div>
       </section>
     </main>
@@ -432,159 +451,11 @@
       <div class="field"><label for="marginSize">여백</label><select id="marginSize"><option>보통</option><option>좁게</option><option>넓게</option></select></div>
       <div class="field"><label for="theme">문서 테마</label><select id="theme"><option>밝게</option><option>어둡게</option></select></div>
       <div class="estimate" id="estimate">예상 결과: PDF 약 2쪽</div>
+      <p class="error" id="exportStatus" role="status" aria-live="polite"></p>
       <div class="panel-actions"><button class="secondary" id="cancelExport" type="button">취소</button><button class="primary" id="confirmExport" type="button">PDF로 저장</button></div>
     </aside>
   </div>
 
-  <script>
-    const sample = `# 생성형 AI 실전 강의안
-
-> 비전문가도 90분 안에 AI 활용 결과물을 완성하는 실습형 강의입니다.
-
-## 학습 목표
-
-- 생성형 AI의 핵심 개념 이해
-- 좋은 질문을 만드는 프롬프트 구조 익히기
-- 업무에 바로 쓰는 결과물 완성
-
-## 오늘의 실습
-
-1. AI에게 역할과 대상을 알려줍니다.
-2. 원하는 결과 형식을 구체적으로 정합니다.
-3. 첫 결과를 검토하고 개선 요청을 합니다.
-
-\`핵심: 작게 시작하고 결과를 보며 수정합니다.\`
-
-## 다음 행동
-
-- 내 업무 한 가지를 선택합니다.
-- 10분 안에 첫 프롬프트를 실행합니다.`;
-
-    const $ = (selector) => document.querySelector(selector);
-    const screens = [...document.querySelectorAll(".screen")];
-    const show = (id) => {
-      screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    function escapeHtml(value) {
-      return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
-    }
-
-    function renderMarkdown(value) {
-      let html = escapeHtml(value);
-      html = html
-        .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-        .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-        .replace(/^# (.*)$/gm, "<h1>$1</h1>")
-        .replace(/^&gt; (.*)$/gm, "<blockquote>$1</blockquote>")
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/^- (.*)$/gm, "<li>$1</li>")
-        .replace(/^\d+\. (.*)$/gm, "<li>$1</li>")
-        .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
-        .replace(/\n{2,}/g, "</p><p>")
-        .replace(/\n/g, "<br>");
-      return `<p>${html}</p>`.replace(/<p>\s*(<h[1-3]>)/g, "$1").replace(/(<\/h[1-3]>)\s*<\/p>/g, "$1");
-    }
-
-    function loadDocument(text, name = "AI_강의안.md") {
-      $("#source").value = text;
-      $("#documentName").textContent = name;
-      $("#exportName").value = name.replace(/\.(md|markdown|txt)$/i, "");
-      updatePreview();
-      show("workspaceScreen");
-    }
-
-    function updatePreview() {
-      const text = $("#source").value;
-      $("#preview").innerHTML = renderMarkdown(text);
-      $("#lineCount").textContent = `${text.split("\n").length}줄`;
-    }
-
-    function handleFile(file) {
-      $("#fileError").textContent = "";
-      if (!file) return;
-      if (!/\.(md|markdown|txt)$/i.test(file.name)) {
-        $("#fileError").textContent = "Markdown 또는 텍스트 파일을 선택해 주세요.";
-        return;
-      }
-      if (file.size > 20 * 1024 * 1024) {
-        $("#fileError").textContent = `현재 파일은 ${(file.size / 1024 / 1024).toFixed(1)}MB입니다. 최대 20MB까지 열 수 있습니다.`;
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => loadDocument(String(reader.result), file.name);
-      reader.onerror = () => { $("#fileError").textContent = "파일을 읽지 못했습니다. UTF-8 형식인지 확인해 주세요."; };
-      reader.readAsText(file, "UTF-8");
-    }
-
-    const openPicker = () => $("#fileInput").click();
-    $("#chooseFile").addEventListener("click", (event) => { event.stopPropagation(); openPicker(); });
-    $("#heroOpen").addEventListener("click", openPicker);
-    $("#navOpen").addEventListener("click", () => show("startScreen"));
-    document.querySelectorAll("[data-scroll]").forEach((button) => button.addEventListener("click", () => {
-      show("startScreen");
-      requestAnimationFrame(() => document.getElementById(button.dataset.scroll).scrollIntoView({ behavior: "smooth" }));
-    }));
-    $("#dropzone").addEventListener("click", openPicker);
-    $("#dropzone").addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openPicker(); }
-    });
-    $("#fileInput").addEventListener("change", (event) => handleFile(event.target.files[0]));
-    ["dragenter", "dragover"].forEach((name) => $("#dropzone").addEventListener(name, (event) => {
-      event.preventDefault(); $("#dropzone").classList.add("drag");
-    }));
-    ["dragleave", "drop"].forEach((name) => $("#dropzone").addEventListener(name, (event) => {
-      event.preventDefault(); $("#dropzone").classList.remove("drag");
-    }));
-    $("#dropzone").addEventListener("drop", (event) => handleFile(event.dataTransfer.files[0]));
-    $("#sampleButton").addEventListener("click", () => loadDocument(sample));
-    $("#source").addEventListener("input", updatePreview);
-    $("#newFile").addEventListener("click", () => show("startScreen"));
-
-    document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
-      document.querySelectorAll("[data-view]").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
-      const mode = button.dataset.view;
-      $("#workspace").classList.toggle("show-source", mode === "source");
-      document.querySelector(".source-pane").style.display = mode === "preview" ? "none" : "";
-      document.querySelector(".preview-pane").style.display = mode === "source" ? "none" : "";
-      document.querySelector(".rail").style.display = mode === "split" ? "" : "none";
-      document.querySelector(".editor-grid").style.gridTemplateColumns = mode === "split" ? "" : "1fr";
-    }));
-
-    const setOverlay = (open) => {
-      $("#exportOverlay").classList.toggle("active", open);
-      $("#exportOverlay").setAttribute("aria-hidden", String(!open));
-      if (open) $("#closeExport").focus();
-    };
-    $("#exportButton").addEventListener("click", () => setOverlay(true));
-    $("#closeExport").addEventListener("click", () => setOverlay(false));
-    $("#cancelExport").addEventListener("click", () => setOverlay(false));
-    $("#exportOverlay").addEventListener("click", (event) => { if (event.target === $("#exportOverlay")) setOverlay(false); });
-    document.addEventListener("keydown", (event) => { if (event.key === "Escape") setOverlay(false); });
-
-    let selectedFormat = "PDF";
-    document.querySelectorAll("[data-format]").forEach((button) => button.addEventListener("click", () => {
-      selectedFormat = button.dataset.format;
-      document.querySelectorAll("[data-format]").forEach((item) => item.classList.toggle("active", item === button));
-      $("#confirmExport").textContent = selectedFormat === "DOCX" ? "Word 문서로 저장" : `${selectedFormat}로 저장`;
-      $("#estimate").textContent = selectedFormat === "PDF" ? "예상 결과: PDF 약 2쪽" : `예상 결과: ${selectedFormat} 파일 1개`;
-    }));
-    $("#confirmExport").addEventListener("click", () => {
-      setOverlay(false);
-      const extension = selectedFormat.toLowerCase();
-      $("#completeFormat").textContent = selectedFormat === "DOCX" ? "Word 문서" : selectedFormat;
-      $("#completeFile").textContent = `${$("#exportName").value || "문서"}.${extension}`;
-      show("completeScreen");
-    });
-    $("#backToDocument").addEventListener("click", () => show("workspaceScreen"));
-    $("#saveAgain").addEventListener("click", () => { show("workspaceScreen"); setTimeout(() => setOverlay(true), 150); });
-    $("#openNew").addEventListener("click", () => show("startScreen"));
-
-    loadDocument(sample);
-    show("startScreen");
-  </script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
