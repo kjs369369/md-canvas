@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문서 보기 — MD Canvas</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="og.png">
+  <style>
+    :root { color-scheme: light; --ink:#1d1d1f; --slate:#6e6e73; --line:#d2d2d7; --mint:#16835c; --danger:#b42318; --canvas:#f5f5f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    header, main { width: min(980px, calc(100% - 28px)); margin: 0 auto; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 22px 0 8px; }
+    a { color: #755812; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.04em; }
+    .note { color: var(--slate); line-height: 1.6; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    button, .ghost {
+      min-height: 46px; padding: 0 16px; border-radius: 11px; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    button { border: 0; color: white; background: #1d1d1f; }
+    button.secondary { border: 1px solid var(--line); color: var(--ink); background: white; }
+    .ghost { display: inline-flex; align-items: center; text-decoration: none; }
+    iframe { width: 100%; height: min(72vh, 820px); border: 1px solid var(--line); border-radius: 16px; background: white; }
+    #viewStatus { min-height: 24px; font-weight: 700; }
+    #viewStatus.good { color: var(--mint); }
+    #viewStatus.bad { color: var(--danger); }
+    .card { margin: 24px 0 48px; padding: 28px; background: white; border-radius: 24px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="ghost" href="./">← MD Canvas</a>
+    <strong>MD Canvas</strong>
+  </header>
+  <main>
+    <section class="card" id="viewError" hidden>
+      <h1>문서를 열 수 없습니다</h1>
+      <p id="viewErrorText" class="note"></p>
+    </section>
+    <section id="viewer" hidden>
+      <h1 id="viewTitle">문서</h1>
+      <p class="note">이 화면은 브라우저에서 변환 결과를 보여 줍니다. 주소의 # 뒤에만 문서 내용이 있고, 서버에는 저장되지 않습니다. <span id="fileName"></span></p>
+      <div class="actions" id="downloadButtons">
+        <button type="button" id="downloadPdf">PDF 다운로드</button>
+        <button class="secondary" type="button" id="downloadHtml">HTML 다운로드</button>
+        <button class="secondary" type="button" id="downloadDocx">Word 다운로드</button>
+        <button class="secondary" type="button" id="copyLink">주소 복사</button>
+      </div>
+      <p id="viewStatus" role="status" aria-live="polite"></p>
+      <iframe id="resultFrame" title="변환 결과" sandbox="allow-same-origin"></iframe>
+    </section>
+  </main>
+  <script type="module" src="js/view.js"></script>
+</body>
+</html>

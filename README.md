@@ -6,13 +6,17 @@ Markdown 파일을 브라우저에서 읽고 미리보기한 뒤 PDF, HTML, DOCX
 
 - Apple 스타일·골드 포인트 랜딩 페이지
 - Markdown 파일 로컬 읽기와 미리보기
-- 내보내기 UX 프로토타입
+- PDF·HTML·Word 파일 다운로드와 브라우저 미리보기
+- 서버에 파일을 저장하지 않는 공유 보기 주소 (`view.html#...`)
 - 개인정보처리방침·이용약관·오픈소스 라이선스
 - OG·Twitter 카드와 검색엔진 메타데이터
 
 ## 로컬 실행
 
 ```bash
+npm install
+npm test
+npm run build
 cd prototype
 python3 -m http.server 4173
 ```
